@@ -1,29 +1,47 @@
 import requests
 import rasterio
-from rasterio.plot import show
-from PIL import Image
-import subprocess
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+import csv
 
-tif_file = "src/swissimage-dop10_2023_2541-1160_2_2056.tif"
-
-with rasterio.open(tif_file) as image:
-    img_array = image.read([1,2,3])
-    metadata = image.meta
-    corner = metadata['transform']
-image.close()
-
-top_left_x, top_left_y = corner * (0, 0)
-center_x, center_y = corner * (metadata['width']/2, metadata['height']/2)
-
-print("Top left corner coordinates:", top_left_x, top_left_y)
-print("Bottom right corner coordinates:", center_x, center_y)
+City_list = ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Luzern', 'St_Gallen', 'Lugano', 'Biel']
 
 rgb_array = np.array([[0.2989], [0.5870], [0.1140]])
-def rgb2gray(rgb):
-    return np.dot(rgb.T, rgb_array).squeeze().T
 
-#gray = rgb2gray(img_array)
-#show(gray, cmap = 'terrain')
+def rgb2gray(rgb):
+    return np.dot(rgb[..., :3], rgb_array).squeeze()
+
+
+with open('data/full_list.csv', 'w', newline='') as file:
+    csvwriter = csv.writer(file)
+    csvwriter.writerow(['Location', 'Coordinates', 'Array'])
+
+for city in City_list:
+    path = f'data/city_link/{city}.csv'
+
+    with open(path, 'r') as link_list:
+        reader = csv.reader(link_list)
+        next(reader)  
+        for link in reader:
+            try:
+                response = requests.get(link[0])
+                if response.status_code == 200:
+                    with open('swissimage.tif', 'wb') as f:
+                        f.write(response.content)
+
+                    with rasterio.open('swissimage.tif') as dataset:
+                        img_array = dataset.read([1, 2, 3])
+                        metadata = dataset.meta
+                        corner = metadata['transform']
+                        center_x, center_y = corner * (metadata['width']/2, metadata['height']/2)
+                        coord = (center_x, center_y)
+
+                        gray = rgb2gray(img_array)
+
+                        gray_list = gray.round().astype(int).flatten().tolist()
+
+                        with open('data/full_list.csv', 'a', newline='') as file:
+                            csvwriter = csv.writer(file)
+                            csvwriter.writerow([city, coord, gray_list])
+            except Exception:
+                print(f"Failed to process")
+    print(city + ' done')
