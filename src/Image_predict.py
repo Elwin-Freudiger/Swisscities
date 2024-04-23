@@ -4,9 +4,13 @@ from sklearn.model_selection import train_test_split
 
 
 #open the csv
-data = pd.read_csv('data/full_list.csv')
+data = pd.read_csv('data/csv/full_list.csv')
 
-for row in range(len(data)):
-    data['Array'][row] = np.array(data['Array'][row]).reshape((500,500))
+def string_to_array(string):
+    elements = string.strip('[]').split(',')
+    array = np.array(elements, dtype=int).reshape((500, 500))
+    return array
+
+data['Array'] = data['Array'].apply(string_to_array)
 
 print(data['Array'][0])
