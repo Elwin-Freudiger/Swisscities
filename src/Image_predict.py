@@ -13,4 +13,5 @@ def string_to_array(string):
 
 data['Array'] = data['Array'].apply(string_to_array)
 
-print(data['Array'][0])
+
+print('hello')
