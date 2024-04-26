@@ -10,7 +10,7 @@ links = []
 with open('data/all_links.csv', 'r') as file:
     links = file.read().splitlines()
 
-print(links[5])
+np.random.seed(2345)
 
 sub_list = np.random.randint(len(links)+1, size = 5000)
 
