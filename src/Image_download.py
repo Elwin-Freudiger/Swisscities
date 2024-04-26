@@ -2,16 +2,22 @@ import requests
 import rasterio
 import numpy as np
 import csv
+import cv2 as cv
+
+file_path = 'data/csv/Ten_cities_lower.csv'
+
+new_size = (100,100)
 
 #The list of cities we will use
 City_list = ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Luzern', 'St_Gallen', 'Lugano', 'Biel']
+
 #formula to convert rgb image into a grayscale
 rgb_array = np.array([[0.2989], [0.5870], [0.1140]])
 def rgb2gray(rgb):
     return np.dot(rgb.T, rgb_array).squeeze().T
 
 #open the csv and write the headers
-with open('data/full_list.csv', 'w', newline='') as file:
+with open(file_path, 'w', newline='') as file:
     csvwriter = csv.writer(file)
     csvwriter.writerow(['Location', 'East', 'North', 'Array'])
 
@@ -37,10 +43,9 @@ for city in City_list:
                         center_x, center_y = corner * (metadata['width']/2, metadata['height']/2)
 
                         gray = rgb2gray(img_array) #transform into grayscale array
-
                         gray_list = gray.round().astype(int).flatten().tolist()
                         #add line to csv
-                        with open('data/full_list.csv', 'a', newline='') as file:
+                        with open(file_path, 'a', newline='') as file:
                             csvwriter = csv.writer(file)
                             csvwriter.writerow([city, center_x, center_y, gray_list])
             except Exception: #expection in case the link is broken
