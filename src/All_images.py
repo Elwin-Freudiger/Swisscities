@@ -5,6 +5,7 @@ import csv
 import cv2 as cv
 import pandas as pd
 
+
 links = []
 
 with open('data/all_links.csv', 'r') as file:
