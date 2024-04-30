@@ -27,6 +27,6 @@ https://dev.to/haratena9/image-processing-2-rgb-histogram-5dii
 
 https://learnopencv.com/edge-detection-using-opencv/
 
-
+https://pyimagesearch.com/2019/02/04/keras-multiple-inputs-and-mixed-data/
 
 
