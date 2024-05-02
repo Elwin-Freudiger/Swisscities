@@ -6,28 +6,23 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
 import tensorflow as tf
+from tensorflow import keras
+from keras import layers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPooling2D
-from tensorflow.keras.layers import Activation
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Input
-from tensorflow.keras.models import Model
+from tensorflow.keras.layers import BatchNormalization, Conv2D, MaxPooling2D, Activation, Dropout, Dense, Flatten, Input
+
 
 df = pd.read_csv('data/csv/Features.csv')
 # Convert the 'Location' column to categorical labels
 df['Location'] = pd.Categorical(df['Location'])
-df['Location'] = df['Location'].cat.codes
+df['Location_code'] = df['Location'].cat.codes
 
 numeric_features = ['Mean', 'Stdev', 'Contrast', 'Correlation', 'Energy', 'Homogeneity']
 scaler = StandardScaler()
 df[numeric_features] = scaler.fit_transform(df[numeric_features])
 
 Numeric_train, Numeric_test = train_test_split(df[numeric_features], test_size=0.3, random_state=42)
-y_train, y_test = train_test_split(df['Location'], test_size=0.3, random_state=42)
+y_train, y_test = train_test_split(df['Location_code'], test_size=0.3, random_state=42)
 Image_string_train , Image_string_test = train_test_split(df[['RGB']], test_size=0.3, random_state=42)
 
 y_train = np.array(y_train.to_list())
@@ -50,26 +45,39 @@ for i in Image_string_test['RGB'].to_numpy():
     Image_test.append(array)
 Image_test = np.array(Image_test)
 
-model = Sequential()
-model.add(Flatten(input_shape=(256, 3)))
-model.add(Dense(128, activation='relu'))
-model.add(Dense(128, activation='sigmoid'))
-model.add(Dense(10, activation= 'softmax'))
+numeric_input = Input(shape = (6, ), name = 'Numeric')
+image_input = Input(shape = (256, 3), name = 'Image')
 
-#compile the model
+numeric_dense = Dense(64, activation='relu')(numeric_input)
+
+image_flatten = Flatten()(image_input)
+image_dense = Dense(128, activation = 'relu')(image_flatten)
+image_drop = Dropout(0.5)(image_dense)
+image_dense = Dense(128, activation = 'relu')(image_drop)
+
+x = layers.concatenate([numeric_dense, image_dense])
+
+xdense = Dense(64, activation = 'relu')(x)
+output = Dense(10, activation = 'softmax')(xdense)
+
+model = keras.Model(inputs=[numeric_input, image_input], outputs = output)
+
 model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
-#train the model
-model.fit(Image_train, y_train, epochs=10)
+model.fit(
+    {"Numeric": Numeric_train, "Image": Image_train},
+    y_train, epochs=10, batch_size=32)
 
 #test accuracy
-test_loss, test_acc = model.evaluate(Image_test,  y_test, verbose=2)
+test_loss, test_acc = model.evaluate([Numeric_test, Image_test],  y_test, verbose=2)
 print('\nTest accuracy:', test_acc)
 
-y_pred_probs = model.predict(Image_test)
+y_pred_probs = model.predict([Numeric_test, Image_test])
 y_pred = np.argmax(y_pred_probs, axis=1)
 
 cm = confusion_matrix(y_test, y_pred)
 print(cm)
+print(df['Location'].value_counts())
+print(df['Location_code'].value_counts())

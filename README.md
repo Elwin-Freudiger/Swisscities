@@ -29,4 +29,6 @@ https://learnopencv.com/edge-detection-using-opencv/
 
 https://pyimagesearch.com/2019/02/04/keras-multiple-inputs-and-mixed-data/
 
+https://keras.io/guides/functional_api/
+
 
