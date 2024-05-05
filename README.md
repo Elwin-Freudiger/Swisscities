@@ -31,4 +31,6 @@ https://pyimagesearch.com/2019/02/04/keras-multiple-inputs-and-mixed-data/
 
 https://keras.io/guides/functional_api/
 
+https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
+
 

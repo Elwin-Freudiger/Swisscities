@@ -55,7 +55,7 @@ for kanton in list_kanton:
                         energy = skimage.feature.graycoprops(co_matrix, 'energy')[0, 0]
                         homogeneity = skimage.feature.graycoprops(co_matrix, 'homogeneity')[0, 0]
 
-                        row = [kanton, center_x, center_y, mean, stdev, distribution, contrast, correlation, energy, homogeneity]
+                        row = [kanton, center_x, center_y, mean, stdev, distribution.tolist(), contrast, correlation, energy, homogeneity]
                         data.append(row)
             except Exception as e:
                 (f"Failed to process {canton_links[rank]}: {e}")

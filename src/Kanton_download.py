@@ -7,7 +7,6 @@ import pandas as pd
 import geopandas as gpd
 import random
 
-
 list_kanton = [
     'Graubünden', 'Bern', 'Valais', 'Ticino', 'Vaud', 'St.Gallen', 'Zürich', 'Fribourg',
     'Aargau', 'Luzern', 'Uri', 'Thurgau', 'Jura', 'Neuchâtel', 'Schwyz', 'Solothurn',
