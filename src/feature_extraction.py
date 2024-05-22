@@ -8,10 +8,8 @@ import skimage
 from alive_progress import alive_bar; import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-#City_list = ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Luzern', 'St_Gallen', 'Lugano', 'Biel']
-Better_list = ['Bern', 'Zurich', 'Lugano', 'Lausanne', 'Chur', 'Schwyz', 'Glarus', 'Winterthur', 'Sarnen', 'Nendaz']
-
-data = []
+City_list = ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Luzern', 'St_Gallen', 'Lugano', 'Biel']
+Balanced_list = ['Bern', 'Zurich', 'Lugano', 'Lausanne', 'Chur', 'Schwyz', 'Glarus', 'Winterthur', 'Sarnen', 'Nendaz']
 
 def extraction(link, city):
     try:
@@ -47,12 +45,13 @@ def extraction(link, city):
         return None
         
 
-def main():
-    for city in Better_list:
+def main(list, name):
+    data = []
+    for city in list:
         path = f'data/city_link/{city}.csv'
         with open(path, 'r') as link_list:
             links = link_list.read().splitlines()
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor() as executor:
             with alive_bar(len(links)) as bar:
                 future_images = {executor.submit(extraction, link, city): link for link in links}
                 for future in as_completed(future_images):
@@ -62,7 +61,8 @@ def main():
                     bar()
                     
     df = pd.DataFrame(data, columns=['Location', 'East', 'North', 'Mean', 'Stdev', 'Distribution', 'Contrast', 'Correlation', 'Energy', 'Homogeneity'])
-    df.to_csv('data/csv/City_balanced.csv', index=False)
+    df.to_csv(f'data/csv/Features_{name}.csv', index=False)
 
 if __name__ == '__main__':
-    main()
+    main(City_list, 'top10')
+    main(Balanced_list, 'balanced') 
