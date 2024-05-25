@@ -8,23 +8,28 @@ import skimage
 from alive_progress import alive_bar; import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+#both list of cities
 City_list = ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Luzern', 'St_Gallen', 'Lugano', 'Biel']
 Balanced_list = ['Bern', 'Zurich', 'Lugano', 'Lausanne', 'Chur', 'Schwyz', 'Glarus', 'Winterthur', 'Sarnen', 'Nendaz']
 
+#function to extract the image features
 def extraction(link, city):
     try:
+        #use requests to download the file from the link
         response = requests.get(link, timeout=10)
         response.raise_for_status()
+        #save the file in memory
         with rasterio.io.MemoryFile(response.content) as file:
             with file.open() as dataset:
                 img_array = dataset.read([1, 2, 3]).transpose((1, 2, 0))  # Correct dimension order for OpenCV
-                metadata = dataset.meta
+                metadata = dataset.meta #get the metadata
                 corner = metadata['transform']
                 center_x, center_y = corner * (metadata['width'] // 2, metadata['height'] // 2)
 
                 mean = np.mean(img_array)
                 stdev = np.std(img_array)
 
+                #calculating distributions
                 gray = cv.cvtColor(img_array, cv.COLOR_RGB2GRAY)
                 gray_dist = cv.calcHist([gray], [0], None, [256], [0,256])                    
                 red = cv.calcHist([img_array], [0], None, [256], [0, 256])
@@ -32,12 +37,13 @@ def extraction(link, city):
                 blue = cv.calcHist([img_array], [2], None, [256], [0, 256])
                 distribution = np.column_stack((gray_dist.flatten(), red.flatten(), green.flatten(), blue.flatten()))
 
+                #calculating texture features from the co-occurence matrix
                 co_matrix = skimage.feature.graycomatrix(gray, [5], [0], levels=256, normed=True)
                 contrast = skimage.feature.graycoprops(co_matrix, 'contrast')[0, 0]
                 correlation = skimage.feature.graycoprops(co_matrix, 'correlation')[0, 0]
                 energy = skimage.feature.graycoprops(co_matrix, 'energy')[0, 0]
                 homogeneity = skimage.feature.graycoprops(co_matrix, 'homogeneity')[0, 0]
-                
+                #append it to a row
                 row = [city, center_x, center_y, mean, stdev, distribution.tolist(), contrast, correlation, energy, homogeneity]
                 return row
     except Exception as e:
@@ -47,19 +53,19 @@ def extraction(link, city):
 
 def main(list, name):
     data = []
-    for city in list:
+    for city in list: #open the list of links for each city
         path = f'data/city_link/{city}.csv'
         with open(path, 'r') as link_list:
             links = link_list.read().splitlines()
-        with ThreadPoolExecutor() as executor:
-            with alive_bar(len(links)) as bar:
+        with ThreadPoolExecutor() as executor: #use threading to download
+            with alive_bar(len(links)) as bar: #progress bar
                 future_images = {executor.submit(extraction, link, city): link for link in links}
                 for future in as_completed(future_images):
                     row = future.result()
                     if row is not None:
-                        data.append(row)
+                        data.append(row) #append each row to the dataset
                     bar()
-                    
+    #once all downloads are over, create a df and save it to csv     
     df = pd.DataFrame(data, columns=['Location', 'East', 'North', 'Mean', 'Stdev', 'Distribution', 'Contrast', 'Correlation', 'Energy', 'Homogeneity'])
     df.to_csv(f'data/csv/Features_{name}.csv', index=False)
 

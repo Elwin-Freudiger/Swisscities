@@ -39,7 +39,7 @@ def scale_each_channel(image_str):
     scaled_array = np.zeros_like(array, dtype=np.float32)
     for channel in range(array.shape[1]):
         channel_data = array[:, channel]
-        scaled_array[:, channel] = (channel_data - np.min(channel_data)) / (np.max(channel_data) - np.min(channel_data))
+        scaled_array[:, channel] = (channel_data - np.min(channel_data)) / (np.max(channel_data) - np.min(channel_data)) #scale it
     return scaled_array
 
 # Process Image_train data
@@ -67,23 +67,22 @@ image_dense = Dense(128, activation='relu')(image_flatten)
 image_drop = Dropout(0.5)(image_dense)
 image_dense = Dense(128, activation='relu')(image_drop)
 
-x = layers.concatenate([numeric_dense, image_dense])
+x = layers.concatenate([numeric_dense, image_dense]) #concatenate the layers
 
 xdense = Dense(64, activation='relu')(x)
 output = Dense(10, activation='softmax')(xdense)
 
-model = Model(inputs=[numeric_input, image_input], outputs=output)
+model = Model(inputs=[numeric_input, image_input], outputs=output) 
 
-model.summary()
-utils.plot_model(model, "report/multimodel.png")
+model.summary() #summary of the model
 
 model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
-              metrics=['accuracy'])
+              metrics=['accuracy']) #compile it
 
 model.fit(
     {"Numeric": Numeric_train, "Image": Image_train},
-    y_train, epochs=10, batch_size=32)
+    y_train, epochs=10, batch_size=32) #fit it
 
 # Test accuracy
 test_loss, test_acc = model.evaluate([Numeric_test, Image_test], y_test, verbose=2)
@@ -99,5 +98,5 @@ sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=city_names, ytick
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix')
-plt.savefig('report/confusion_matrix_balanced_withinfo.png')
+#plt.savefig('report/confusion_matrix_balanced_withinfo.png')
 plt.show()
